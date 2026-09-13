@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Smart Home Dashboard</title>
+
+    <style>
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: white;
+            text-align: center;
+            padding-top: 80px;
+        }
+
+        .card {
+            width: 400px;
+            margin: auto;
+            padding: 30px;
+            border-radius: 15px;
+            background: #222;
+        }
+
+        .temperature {
+            font-size: 60px;
+            margin: 20px;
+        }
+
+        .status {
+            color: #00ff88;
+        }
+
+        #messages {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+    <h1>🏠 Smart Home</h1>
+
+    <p class="status" id="status">
+        Connecting...
+    </p>
+
+    <div class="temperature">
+
+        🌡️
+        <span id="temperature">
+                --
+            </span>
+        °C
+
+    </div>
+
+    <div id="messages"></div>
+
+</div>
+
+
+<!-- SignalR JavaScript Client -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js">
+</script>
+
+
+<script>
+
+    const connection =
+        new signalR.HubConnectionBuilder()
+
+            .withUrl("/smart-home")
+
+            .withAutomaticReconnect()
+
+            .build();
+
+
+    // Receive temperature from backend
+
+    connection.on(
+        "ReceiveTemperature",
+        (topic, message) => {
+
+            console.log(
+                "Temperature received:",
+                topic,
+                message
+            );
+
+            document.getElementById(
+                "temperature"
+            ).textContent = message;
+
+            document.getElementById(
+                "messages"
+            ).innerHTML =
+                `
+                    <p>
+                        Topic:
+                        ${topic}
+                    </p>
+                    <p>
+                        Temperature:
+                        ${message}°C
+                    </p>
+                    `;
+        }
+    );
+
+
+    // Start SignalR connection
+
+    async function startConnection() {
+
+        try {
+
+            await connection.start();
+
+            document.getElementById(
+                "status"
+            ).textContent =
+                "🟢 Connected to SignalR";
+
+            console.log(
+                "SignalR connected!"
+            );
+
+        } catch (error) {
+
+            console.error(error);
+
+            document.getElementById(
+                "status"
+            ).textContent =
+                "🔴 Connection failed";
+
+            setTimeout(
+                startConnection,
+                5000
+            );
+        }
+    }
+
+
+    startConnection();
+
+</script>
+
+</body>
+
+</html>
